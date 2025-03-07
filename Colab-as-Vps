@@ -1,0 +1,66 @@
+#@title **Create User**
+#@markdown Don't change any things
+#@markdown Enter Username and Password
+
+import os
+import subprocess
+
+username = "vutzzzx" #@param {type:"string"}
+password = "vutzzzx01" #@param {type:"string"}
+
+print("Creating User and Setting it up")
+
+# Creation of user
+os.system(f"useradd -m {username}")
+
+# Add user to sudo group
+os.system(f"adduser {username} sudo")
+
+# Set password of user to 'root'
+os.system(f"echo '{username}:{password}' | sudo chpasswd")
+
+# Change default shell from sh to bash
+os.system("sed -i 's/\/bin\/sh/\/bin\/bash/g' /etc/passwd")
+
+print(f"User created and configured having username `{username}` and password `{password}`")
+
+# Create the new user account
+subprocess.run(["sudo", "adduser", "--disabled-password", username])
+
+# Grant read, write, and delete permissions to the user for a specific directory
+directory_path = "/home/user"
+subprocess.run(["sudo", "chmod", "-R", "777", directory_path])
+
+# Modify the sudoers file to add the user
+sudoers_file = "/etc/sudoers"
+sudoers_entry = f"{username}    ALL=(ALL:ALL) ALL"
+
+# Open the sudoers file in append mode and write the user entry
+with open(sudoers_file, "a") as file:
+    file.write(sudoers_entry + "\n")
+
+# Output success message
+print(f"User '{username}' has been created and granted full permissions.")
+
+# Run the command with elevated privileges
+process = subprocess.Popen(['sudo', 'passwd'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+# Enter the new password
+new_password = "root"
+process.stdin.write(new_password + '\n')
+
+# Re-enter the new password
+process.stdin.write(new_password + '\n')
+
+# Close the input stream
+process.stdin.close()
+
+# Wait for the process to complete
+process.wait()
+
+# Retrieve the output and error messages
+output = process.stdout.read()
+error = process.stderr.read()
+
+# Print the output and error messages
+print("Password updated successfully")
